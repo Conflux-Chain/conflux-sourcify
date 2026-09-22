@@ -66,7 +66,14 @@ export function validateAddress(
       validator: "ethers.getAddress",
       params: req.params,
     });
-    throw new InvalidParameterError(`Invalid address: ${req.params.address}`);
+    const expectedFormat =
+      "Expected a 0x-prefixed 20-byte hex address (EVM format), e.g. 0x8af20b946f7a8660bfa3fa28e30db9359ca11d62";
+    const base32Hint = looksLikeConfluxBase32
+      ? " Conflux base32 addresses (cfx:/cfxtest:) are not accepted on this endpoint."
+      : "";
+    throw new InvalidParameterError(
+      `Invalid address: ${req.params.address}. ${expectedFormat}.${base32Hint}`,
+    );
   }
 
   next();
