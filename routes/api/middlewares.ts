@@ -44,13 +44,26 @@ export function validateAddress(
   res: Response,
   next: NextFunction,
 ) {
+  const chainMap = req.app.get("chains") as ChainMap;
+  const chain = chainMap?.[req.params.chainId as string];
+  const rawAddress = req.params.address;
+  const looksLikeConfluxBase32 = /^cfx(test)?:/i.test(rawAddress || "");
+
   try {
     // Checksum the address
-    req.params.address = getAddress(req.params.address as string);
+    req.params.address = getAddress(rawAddress as string);
   } catch (err: any) {
     logger.info("Invalid address in params", {
       errorMessage: err.message,
       errorStack: err.stack,
+      method: req.method,
+      path: req.originalUrl,
+      chainId: req.params.chainId,
+      chainName: chain?.name,
+      corespace: chain?.corespace,
+      rawAddress,
+      looksLikeConfluxBase32,
+      validator: "ethers.getAddress",
       params: req.params,
     });
     throw new InvalidParameterError(`Invalid address: ${req.params.address}`);
