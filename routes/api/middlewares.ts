@@ -46,8 +46,11 @@ export function validateAddress(
 ) {
   const chainMap = req.app.get("chains") as ChainMap;
   const chain = chainMap?.[req.params.chainId as string];
-  const rawAddress = req.params.address;
-  const looksLikeConfluxBase32 = /^cfx(test)?:/i.test(rawAddress || "");
+  const rawAddressParam = req.params.address;
+  const rawAddress = Array.isArray(rawAddressParam)
+    ? rawAddressParam[0]
+    : rawAddressParam;
+  const looksLikeConfluxBase32 = /^cfx(test)?:/i.test(rawAddress ?? "");
 
   try {
     // Checksum the address
