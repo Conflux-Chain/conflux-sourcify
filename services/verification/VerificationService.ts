@@ -308,6 +308,16 @@ export class VerificationService {
             customCode: "internal_error",
             errorId: uuidv4(),
           };
+          this.logInternalErrorPath("verify_from_crosschain_insert_similar_contract", {
+            verificationId,
+            chainId,
+            address,
+            linkChainIds,
+            hasCreationBytecode: !!creationBytecode,
+            foundCreationTxHash,
+            error,
+            errorId: errorExport.errorId,
+          });
         }
         return this.store.setJobError(verificationId, new Date(), errorExport);
       });
@@ -410,8 +420,12 @@ export class VerificationService {
             customCode: "internal_error",
             errorId: uuidv4()
           };
-          logger.error("Unexpected verification error", {
+          this.logInternalErrorPath("verify_via_worker_unexpected_error", {
             verificationId,
+            functionName,
+            inputChainId: (input as any)?.chainId,
+            inputAddress: (input as any)?.address,
+            inputTraceId: (input as any)?.traceId,
             error,
             errorId: errorExport.errorId
           });
@@ -419,6 +433,13 @@ export class VerificationService {
 
         return this.store.setJobError(verificationId, new Date(), errorExport);
       });
+  }
+
+  private logInternalErrorPath(path: string, context: Record<string, unknown>) {
+    logger.error("Verification internal_error path triggered", {
+      internalErrorPath: path,
+      ...context,
+    });
   }
 
   private runInBackground(verificationId: string, promise: Promise<void>): void {

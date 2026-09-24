@@ -15,6 +15,14 @@ export default function genericErrorHandler(
       +err.statusCode || err.status || StatusCodes.INTERNAL_SERVER_ERROR;
     if (errorCode === StatusCodes.INTERNAL_SERVER_ERROR) {
       logger.error("Unexpected server error", { error: err });
+    } else {
+      logger.warn("Handled non-500 error response", {
+        statusCode: errorCode,
+        message: err?.message,
+        hasPayload: !!err?.payload,
+        hasValidationErrors: !!err?.errors,
+        errorName: err?.name,
+      });
     }
 
     if (err.payload) {
