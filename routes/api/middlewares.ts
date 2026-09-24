@@ -44,16 +44,36 @@ export function validateAddress(
   res: Response,
   next: NextFunction,
 ) {
+  const chainMap = req.app.get("chains") as ChainMap;
+  const chain = chainMap?.[req.params.chainId as string];
+  const rawAddress = req.params.address;
+  const looksLikeConfluxBase32 = /^cfx(test)?:/i.test(rawAddress || "");
+
   try {
     // Checksum the address
-    req.params.address = getAddress(req.params.address as string);
+    req.params.address = getAddress(rawAddress as string);
   } catch (err: any) {
     logger.info("Invalid address in params", {
       errorMessage: err.message,
       errorStack: err.stack,
+      method: req.method,
+      path: req.originalUrl,
+      chainId: req.params.chainId,
+      chainName: chain?.name,
+      corespace: chain?.corespace,
+      rawAddress,
+      looksLikeConfluxBase32,
+      validator: "ethers.getAddress",
       params: req.params,
     });
-    throw new InvalidParameterError(`Invalid address: ${req.params.address}`);
+    const expectedFormat =
+      "Expected a 0x-prefixed 20-byte hex address (EVM format), e.g. 0x8af20b946f7a8660bfa3fa28e30db9359ca11d62";
+    const base32Hint = looksLikeConfluxBase32
+      ? " Conflux base32 addresses (cfx:/cfxtest:) are not accepted on this endpoint."
+      : "";
+    throw new InvalidParameterError(
+      `Invalid address: ${req.params.address}. ${expectedFormat}.${base32Hint}`,
+    );
   }
 
   next();
